@@ -1,0 +1,250 @@
+---
+alwaysApply: true
+---
+# ============================================================
+
+# 🔹 GLOBAL CURSOR RULESET - UCHAKIDE APP MANAGER (v5.3)
+
+# ============================================================
+
+runtime:
+priority_mode: performance
+disable_full_context_analysis: true
+
+meta:
+name: "Uchakide App Manager Ruleset"
+version: 5.3
+description: |
+Cursor AI ruleset updated for the Uchakide App Manager project.
+Fully generic database rules, modal pages, and reference to Applicants module.
+Designed for React + Node/Express + PostgreSQL projects.
+
+performance:
+cache_scans: true
+cache_reasoning: true
+cache_schema_map: true
+incremental_analysis: true
+max_context_depth: 3
+skip_validation_if_unchanged: true
+
+reasoning:
+depth_limit: 3
+skip_noncritical_checks: true
+auto_trust_known_patterns: true
+
+ai_behavior:
+verbosity: low
+infer_context_from_path: true
+skip_restatement: true
+
+# ============================================================
+
+# 🔹 CORE DEVELOPMENT PRINCIPLES
+
+# ============================================================
+
+general_guidelines:
+
+* Maintain design + logic uniformity across any project.
+* Use existing production-ready project and Applicants module as reference for component structure, API design, and schema style.
+* Use **modal pages** for all forms and detail views instead of drawers.
+* Do not overwrite existing production projects.
+* Use structured reasoning: confirm flow → confirm RBAC → then generate.
+* Follow same layout pattern for modals, tables, forms, and report pages.
+* Ensure dark/light theme compatibility.
+* Always include audit metadata (`created_by`, `updated_by`, timestamps) for all tables.
+
+# ============================================================
+
+# 🔹 SCHEMA / DATABASE RULES (GENERIC)
+
+# ============================================================
+
+database_rules:
+auto_who_columns: true
+who_columns: [created_by, created_at, updated_by, updated_at]
+schema_generation:
+style: replicate_existing_schema
+table_creation_rules:
+- Follow reference project naming and style for all new tables
+- Enforce primary keys, foreign keys, and indexes consistently
+- Sub-tables linked to parent tables automatically if parent-child relationship exists
+- Optional fields clearly marked
+- Comments auto-generated to describe table purpose and relationships
+- Data types consistent with PostgreSQL best practices
+foreign_keys: true
+indexes: replicate_existing_schema_style
+constraints: replicate_existing_schema_style
+sub_table_links: true
+optional_fields: clearly_marked
+comments: auto_generate_with_description
+
+# ============================================================
+
+# 🔹 FRONTEND RULES
+
+# ============================================================
+
+frontend_rules:
+
+* Place pages under src/pages/[FeatureName]/
+* Reusable components → src/components/
+* React Hook Form for inputs
+* Use axiosApi for backend calls
+* Auto-apply audit fields in forms
+* Maintain **modal**, table, report layout consistency
+* Auto-detect user info from localStorage / Redux / Context
+* Ask before creating/changing conditional fields
+* Auto-apply dark/light themes
+* Replicate component structure, naming, and layout from **Applicants module**
+
+# ============================================================
+
+# 🔹 BACKEND RULES
+
+# ============================================================
+
+backend_rules:
+
+* Standard folders:
+  routes → backend/src/routes/
+  controllers → backend/src/controllers/
+  models → backend/src/models/
+* Wrap DB calls in try/catch
+* Use parameterized queries
+* Auto-inject WHO columns for all tables
+* Enforce RBAC based on module-level and project-level access
+* Tenant isolation (req.user.center_id) except for AppAdmin/HQ
+* Return clean JSON
+* Maintain audit consistency
+
+# ============================================================
+
+# 🔹 RBAC HIERARCHY
+
+# ============================================================
+
+rbac_rules:
+
+* Use same role logic as existing production project
+* Enforce CRUD / Read/Write / Hide/Show per module based on UserModuleAccess
+* Enforce project-level access via ProjectRoles
+* Apply module-level access to all modules
+
+# ============================================================
+
+# 🔹 AUTO AUDIT FIELD INJECTION
+
+# ============================================================
+
+cursor_injection_rules:
+alwaysApply: true
+inject_before_save:
+- |
+// 🔹 UNIVERSAL AUTO-AUDIT HANDLER FOR APP MANAGER
+let currentUser;
+try {
+currentUser =
+JSON.parse(localStorage.getItem("authUser")) ||
+JSON.parse(localStorage.getItem("currentUser")) ||
+JSON.parse(localStorage.getItem("user")) ||
+{};
+} catch (e) { currentUser = {}; }
+
+```
+  const username = currentUser?.username || currentUser?.name || "system";
+
+  if (editItem) {
+    formData.updated_by = username;
+    formData.updated_at = new Date().toISOString();
+  } else {
+    formData.created_by = username;
+    formData.created_at = new Date().toISOString();
+  }
+```
+
+# ============================================================
+
+# 🔹 SMART NAMING CONVENTIONS
+
+# ============================================================
+
+smart_naming_conventions:
+enabled: true
+auto_confirm: true
+rules:
+frontend:
+- Report pages → <EntityName>Report.jsx
+- Detail views → <EntityName>Modal.jsx
+- Tables → <EntityName>Table.jsx
+- Services → <EntityName>Service.js
+- Redux/context → <entityName>Slice.js
+backend:
+- Controller → <entityName>Controller.js
+- Model → <entityName>Model.js
+- Routes → <entityName>Routes.js
+- Middleware → <entityName>Middleware.js
+
+# ============================================================
+
+# 🔹 VALIDATION & TESTING
+
+# ============================================================
+
+validation:
+full_project_scan: false
+validate_only_changed_files: true
+skip_static_analysis_on_small_changes: true
+
+testing_rules:
+
+* Frontend → React Testing Library + Cypress
+* Backend → Jest + Supertest
+* Run lint + tests before commit
+* Verify RBAC, WHO columns, and tenant filtering
+
+# ============================================================
+
+# 🔹 DESIGN CONSISTENCY
+
+# ============================================================
+
+ui_guidelines:
+
+* Match layout, spacing, typography, and modal/table/report structure from reference project
+* Maintain card/table/report consistency
+* Confirm dark/light modes
+* Ask user before creating new UI patterns
+
+# ============================================================
+
+# 🔹 AI CLARIFICATION & COMMUNICATION
+
+# ============================================================
+
+ai_clarification_templates:
+tone: "Professional, direct"
+ask_before_actions:
+- Only ask when module type, folder, or RBAC logic is ambiguous
+confirmation_examples:
+- “Confirm same layout as Applicants module?”
+refusal_guidelines:
+- “Skipping to avoid breaking existing logic — confirm if override needed.”
+
+communication_guidelines:
+
+* Always clarify uncertainty before action
+* Prioritize accuracy and consistency over speed
+* Use same tone across backend and frontend
+* Speak as a proactive senior dev
+* Example phrasing:
+
+  * “To confirm, should this match your Applicant layout?”
+  * “Do you want the same conditional visibility logic as UniversityDetails?”
+  * “Should I auto-apply RBAC filters for OrgAdmin and Caseworker?”
+
+performance_summary:
+optimization_level: high
+prefer_speed_over_explanation: true
+confirm_major_changes_only: true
+enable_background_indexing: true

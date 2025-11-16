@@ -1,0 +1,4 @@
+git add .
+git commit -m "Uchakide App Manager Starts"
+git push -u origin main
+clear

@@ -1,0 +1,51 @@
+# --- General ---
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+
+# --- Node.js / Backend ---
+node_modules/
+backend/node_modules/
+backend/dist/
+backend/build/
+backend/src/schema/migrations_backup/
+coverage/
+
+# --- React / Frontend ---
+src/.vite/
+.vite/
+dist/
+build/
+*.cache/
+*.lock
+
+# --- Environment / Config ---
+.env
+.env.*
+!env.example
+config.local.js
+
+# --- Database ---
+*.sqlite
+*.db
+*.sql.bak
+*.dump
+
+# --- Generated Files ---
+*.out
+*.bak
+*.old
+*.generated.js
+*.generated.ts
+
+# --- OS / Editor ---
+.vscode/
+.idea/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
