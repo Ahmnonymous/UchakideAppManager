@@ -1,6 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const projectController = require("../controllers/projectController");
+const authMiddleware = require("../middlewares/authMiddleware");
+const roleMiddleware = require("../middlewares/roleMiddleware");
+const { MODULES } = require("../constants/rbacMatrix");
+
+router.use(authMiddleware);
+router.use(roleMiddleware({ module: MODULES.APPLICANTS }));
 
 router.get("/", projectController.getAll);
 router.get("/:id", projectController.getById);
