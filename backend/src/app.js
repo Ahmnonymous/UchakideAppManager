@@ -22,10 +22,12 @@ const projectRolesRoutes = require("./routes/projectRolesRoutes");
 const projectUsersRoutes = require("./routes/projectUsersRoutes");
 const projectRoleMenuAccessRoutes = require("./routes/projectRoleMenuAccessRoutes");
 const projectMenusRoutes = require("./routes/projectMenusRoutes");
+const attachmentRoutes = require("./routes/attachmentRoutes");
 
 // Route registration
 
 app.use("/api/auth", authRoutes);
+app.use("/api/appManager", attachmentRoutes);
 app.use("/api/appManager/projects", projectRoutes);
 app.use("/api/appManager/payments", projectPaymentsRoutes);
 app.use("/api/appManager/bugs", projectBugsRoutes);

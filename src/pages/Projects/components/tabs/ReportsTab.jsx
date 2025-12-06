@@ -224,7 +224,16 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
         header: "Description",
         accessorKey: "description",
         enableColumnFilter: false,
-        cell: (cell) => cell.getValue() || "-",
+        cell: (cell) => {
+          const value = cell.getValue() || "";
+          if (!value) return "-";
+          const truncated = value.length > 50 ? `${value.substring(0, 50)}...` : value;
+          return (
+            <span title={value.length > 50 ? value : undefined}>
+              {truncated}
+            </span>
+          );
+        },
       },
       {
         header: "Created By",
