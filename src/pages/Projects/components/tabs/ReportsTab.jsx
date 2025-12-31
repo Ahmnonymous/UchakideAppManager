@@ -63,6 +63,7 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
       report_name: "",
       description: "",
       fields_displayed: "",
+      status: "In progress",
     },
   });
 
@@ -103,6 +104,7 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
         report_name: editItem?.report_name || "",
         description: editItem?.description || "",
         fields_displayed: "",
+        status: editItem?.status || "In progress",
       });
       // hydrate builder rows from editItem.fields_displayed
       let rows = [];
@@ -150,6 +152,7 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
         project_id: projectId,
         report_name: values.report_name,
         description: values.description || null,
+        status: values.status || "In progress",
         fields_displayed: fieldRows.map((r) => ({
           table_name: r.table_name?.trim() || "",
           column_name: r.column_name?.trim() || "",
@@ -236,6 +239,25 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
         },
       },
       {
+        header: "Status",
+        accessorKey: "status",
+        enableColumnFilter: false,
+        cell: (cell) => {
+          const status = cell.getValue() || "In progress";
+          const statusColors = {
+            "In progress": "warning",
+            "Done": "success",
+            "In Review": "info",
+          };
+          const color = statusColors[status] || "secondary";
+          return (
+            <span className={`badge bg-${color}`}>
+              {status}
+            </span>
+          );
+        },
+      },
+      {
         header: "Created By",
         accessorKey: "created_by",
         enableColumnFilter: false,
@@ -298,6 +320,7 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
             const composite = [
               r.report_name,
               r.description,
+              r.status,
               r.created_by,
               r.updated_by,
             ]
@@ -360,6 +383,24 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
                 )}
               />
             </FormGroup>
+            <Row>
+              <Col md={6}>
+                <FormGroup>
+                  <Label>Status</Label>
+                  <Controller
+                    name="status"
+                    control={control}
+                    render={({ field }) => (
+                      <Input type="select" disabled={isOrgExecutive} {...field}>
+                        <option value="In progress">In progress</option>
+                        <option value="Done">Done</option>
+                        <option value="In Review">In Review</option>
+                      </Input>
+                    )}
+                  />
+                </FormGroup>
+              </Col>
+            </Row>
             <FormGroup>
               <Label>Report Fields Display</Label>
               <div className="border rounded p-3 bg-light mb-3">

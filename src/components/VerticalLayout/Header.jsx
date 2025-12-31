@@ -7,8 +7,7 @@ import { Link } from "react-router-dom";
 // Import menuDropdown
 import ProfileMenu from "../CommonForBoth/TopbarDropdown/ProfileMenu";
 
-import logo from "../../assets/images/logo.svg";
-import logoLightSvg from "../../assets/images/logo-light.svg";
+import logo from "../../assets/images/logo.png";
 
 //i18n
 import { withTranslation } from "react-i18next";
@@ -46,7 +45,7 @@ const Header = props => {
 
               <Link to="/" className="logo logo-light">
                 <span className="logo-sm">
-                  <img src={logoLightSvg} alt="" height="22" />
+                  <img src={logo} alt="" height="22" />
                 </span>
               </Link>
             </div>

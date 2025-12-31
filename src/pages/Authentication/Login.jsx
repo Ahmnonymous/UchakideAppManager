@@ -29,8 +29,8 @@ import { loginUser } from "/src/store/actions";
 
 // import images
 import profile from "../../assets/images/profile-img.png";
-import logo from "../../assets/images/logo.svg";
-import lightlogo from "../../assets/images/logo-light.svg";
+import logo from "../../assets/images/logo.png";
+import favicon from "../../assets/images/favicon.png";
 
 const Login = (props) => {
   //meta title
@@ -102,7 +102,7 @@ const Login = (props) => {
                       <div className="avatar-md profile-user-wid mb-4">
                         <span className="avatar-title rounded-circle bg-light">
                           <img
-                            src={lightlogo}
+                            src={favicon}
                             alt=""
                             className="rounded-circle"
                             height="34"
@@ -114,7 +114,7 @@ const Login = (props) => {
                       <div className="avatar-md profile-user-wid mb-4">
                         <span className="avatar-title rounded-circle bg-light">
                           <img
-                            src={logo}
+                            src={favicon}
                             alt=""
                             className="rounded-circle"
                             height="34"

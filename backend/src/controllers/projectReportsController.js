@@ -44,6 +44,14 @@ const projectReportsController = {
     return payload;
   },
 
+  _validateStatus(status) {
+    const validStatuses = ["In progress", "Done", "In Review"];
+    if (status && !validStatuses.includes(status)) {
+      return "In progress"; // Default to "In progress" if invalid
+    }
+    return status || "In progress";
+  },
+
   getById: async (req, res) => {
     try {
       const record = await projectReportsModel.getById(req.params.id);
@@ -61,6 +69,7 @@ const projectReportsController = {
       const auditName = getAuditName(req);
       const payload = {
         ...req.body,
+        status: projectReportsController._validateStatus(req.body.status),
         created_by: auditName,
         updated_by: auditName,
       };
@@ -77,6 +86,7 @@ const projectReportsController = {
     try {
       const payload = {
         ...req.body,
+        status: projectReportsController._validateStatus(req.body.status),
         updated_by: getAuditName(req),
       };
       delete payload.created_by;

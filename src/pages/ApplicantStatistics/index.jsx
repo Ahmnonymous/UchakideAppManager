@@ -4,6 +4,7 @@ import { Container, Row, Col } from "reactstrap";
 import { withTranslation } from "react-i18next";
 
 import WelcomeComp from "./WelcomeComp";
+import DashboardStats from "./DashboardStats";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 
 const ApplicantStatistics = (props) => {
@@ -20,6 +21,11 @@ const ApplicantStatistics = (props) => {
           <Row>
             <Col>
               <WelcomeComp />
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              <DashboardStats />
             </Col>
           </Row>
         </Container>

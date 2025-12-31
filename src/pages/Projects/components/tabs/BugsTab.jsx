@@ -224,7 +224,23 @@ const BugsTab = ({ projectId, bugs, menus = [], onRefresh, showAlert }) => {
         header: "Status",
         accessorKey: "status",
         enableColumnFilter: false,
-        cell: (cell) => cell.getValue() || "-",
+        cell: (cell) => {
+          const status = cell.getValue() || "Open";
+          const statusColors = {
+            "Open": "warning",
+            "In Progress": "info",
+            "In Review": "info",
+            "Done": "success",
+            "Blocked": "danger",
+            "Closed": "success",
+          };
+          const color = statusColors[status] || "secondary";
+          return (
+            <span className={`badge bg-${color}`}>
+              {status}
+            </span>
+          );
+        },
       },
       {
         header: "Page",

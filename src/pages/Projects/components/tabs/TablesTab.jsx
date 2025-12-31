@@ -77,6 +77,7 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
       found_at: "",
       parent_table: "",
       relationship_type: "",
+      status: "In progress",
     },
   });
 
@@ -96,6 +97,7 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
         found_at: editItem?.found_at || "",
         parent_table: editItem?.parent_table || "",
         relationship_type: editItem?.relationship_type || "",
+        status: editItem?.status || "In progress",
       });
       let parsedFields = [];
       if (editItem?.field_definitions) {
@@ -139,6 +141,7 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
         found_at: values.found_at || null,
         parent_table: values.parent_table || null,
         relationship_type: values.relationship_type || null,
+        status: values.status || "In progress",
         field_definitions: fieldRows
           .map((row) => ({
             field_name: row.field_name?.trim(),
@@ -230,6 +233,25 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
         accessorKey: "relationship_type",
         enableColumnFilter: false,
         cell: (cell) => cell.getValue() || "-",
+      },
+      {
+        header: "Status",
+        accessorKey: "status",
+        enableColumnFilter: false,
+        cell: (cell) => {
+          const status = cell.getValue() || "In progress";
+          const statusColors = {
+            "In progress": "warning",
+            "Done": "success",
+            "In Review": "info",
+          };
+          const color = statusColors[status] || "secondary";
+          return (
+            <span className={`badge bg-${color}`}>
+              {status}
+            </span>
+          );
+        },
       },
       {
         header: "Created By",
@@ -352,6 +374,7 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
               t.parent_table,
               t.relationship_type,
               t.found_at,
+              t.status,
               t.created_by,
               t.updated_by,
             ]
@@ -453,6 +476,24 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
                         <option value="One-to-Many">One-to-Many</option>
                         <option value="Many-to-Many">Many-to-Many</option>
                         <option value="Lookup">Lookup</option>
+                      </Input>
+                    )}
+                  />
+                </FormGroup>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6}>
+                <FormGroup>
+                  <Label>Status</Label>
+                  <Controller
+                    name="status"
+                    control={control}
+                    render={({ field }) => (
+                      <Input type="select" disabled={isOrgExecutive} {...field}>
+                        <option value="In progress">In progress</option>
+                        <option value="Done">Done</option>
+                        <option value="In Review">In Review</option>
                       </Input>
                     )}
                   />

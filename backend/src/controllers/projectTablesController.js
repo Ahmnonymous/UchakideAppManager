@@ -33,6 +33,14 @@ const parseFieldDefinitions = (payload = {}) => {
   return payload;
 };
 
+const validateStatus = (status) => {
+  const validStatuses = ["In progress", "Done", "In Review"];
+  if (status && !validStatuses.includes(status)) {
+    return "In progress"; // Default to "In progress" if invalid
+  }
+  return status || "In progress";
+};
+
 const projectTablesController = {
   getAll: async (req, res) => {
     try {
@@ -63,6 +71,7 @@ const projectTablesController = {
       const auditName = getAuditName(req);
       const payload = parseFieldDefinitions({
         ...req.body,
+        status: validateStatus(req.body.status),
         created_by: auditName,
         updated_by: auditName,
       });
@@ -78,6 +87,7 @@ const projectTablesController = {
     try {
       const payload = parseFieldDefinitions({
         ...req.body,
+        status: validateStatus(req.body.status),
         updated_by: getAuditName(req),
       });
       delete payload.created_by;
