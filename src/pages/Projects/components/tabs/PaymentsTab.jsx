@@ -553,6 +553,6 @@ const PaymentsTab = ({ projectId, payments, onRefresh, showAlert }) => {
   );
 };
 
-export default PaymentsTab;
+export default React.memo(PaymentsTab);
 
 

@@ -618,6 +618,6 @@ const MenusTab = ({ projectId, menus = [], onRefresh, showAlert }) => {
   );
 };
 
-export default MenusTab;
+export default React.memo(MenusTab);
 
 

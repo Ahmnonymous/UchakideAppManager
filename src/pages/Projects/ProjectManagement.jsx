@@ -100,12 +100,15 @@ const ProjectManagement = () => {
   }, [showAlert]);
 
   const fetchProjectSummary = useCallback(
-    async (projectId) => {
+    async (projectId, silent = false) => {
       if (!projectId) {
         setSummary(null);
         return;
       }
-      setDetailLoading(true);
+      // Only show loading spinner on initial load, not on silent refreshes
+      if (!silent) {
+        setDetailLoading(true);
+      }
       try {
         const response = await axiosApi.get(
           `${API_BASE_URL}/appManager/projects/${projectId}/summary`,
@@ -113,14 +116,19 @@ const ProjectManagement = () => {
         setSummary(response.data || null);
       } catch (error) {
         console.error("Error loading project summary:", error);
-        showAlert(
-          error?.response?.data?.error ||
-            "Unable to load project details. Please try again.",
-          "warning",
-        );
+        // Only show alert on non-silent refreshes to avoid spam
+        if (!silent) {
+          showAlert(
+            error?.response?.data?.error ||
+              "Unable to load project details. Please try again.",
+            "warning",
+          );
+        }
         setSummary(null);
       } finally {
-        setDetailLoading(false);
+        if (!silent) {
+          setDetailLoading(false);
+        }
       }
     },
     [showAlert],
@@ -195,9 +203,9 @@ const ProjectManagement = () => {
     }
   };
 
-  const refreshDetails = useCallback(() => {
+  const refreshDetails = useCallback((silent = true) => {
     if (selectedProject?.id) {
-      fetchProjectSummary(selectedProject.id);
+      fetchProjectSummary(selectedProject.id, silent);
     }
   }, [selectedProject, fetchProjectSummary]);
 

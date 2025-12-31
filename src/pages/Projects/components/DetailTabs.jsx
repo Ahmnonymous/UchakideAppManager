@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardBody, Nav, NavItem, NavLink, TabContent, TabPane } from "reactstrap";
 import classnames from "classnames";
 import PaymentsTab from "./tabs/PaymentsTab";
@@ -133,6 +133,6 @@ const DetailTabs = ({
   );
 };
 
-export default DetailTabs;
+export default React.memo(DetailTabs);
 
 

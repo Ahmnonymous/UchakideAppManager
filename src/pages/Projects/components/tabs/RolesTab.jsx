@@ -344,6 +344,6 @@ const RolesTab = ({ projectId, roles, onRefresh, showAlert }) => {
   );
 };
 
-export default RolesTab;
+export default React.memo(RolesTab);
 
 

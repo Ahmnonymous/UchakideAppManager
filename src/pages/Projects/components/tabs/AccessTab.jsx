@@ -571,6 +571,6 @@ const AccessTab = ({ projectId, roles = [], menus = [], accessList = [], onRefre
   );
 };
 
-export default AccessTab;
+export default React.memo(AccessTab);
 
 

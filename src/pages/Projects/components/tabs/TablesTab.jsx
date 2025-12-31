@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Button,
   Modal,
@@ -176,6 +176,33 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
     }
   };
 
+  const handleMarkAsDone = useCallback(async (item) => {
+    try {
+      const payload = {
+        project_id: projectId,
+        table_name: item.table_name,
+        found_at: item.found_at || null,
+        parent_table: item.parent_table || null,
+        relationship_type: item.relationship_type || null,
+        status: "Done",
+        field_definitions: item.field_definitions || [],
+        ...auditInfo(true), // Pass truthy to get updated_by/updated_at
+      };
+      await axiosApi.put(
+        `${API_BASE_URL}/appManager/tables/${item.id}`,
+        payload,
+      );
+      showAlert("Table status updated to Done successfully.");
+      onRefresh();
+    } catch (error) {
+      console.error("Error updating table status:", error);
+      showAlert(
+        error?.response?.data?.error || "Unable to update table status",
+        "danger",
+      );
+    }
+  }, [projectId, onRefresh, showAlert]);
+
   const handleDelete = (item, closeModal = false) => {
     showDeleteConfirmation(
       {
@@ -254,6 +281,28 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
         },
       },
       {
+        header: "Action",
+        enableColumnFilter: false,
+        cell: (cell) => {
+          const row = cell.row.original;
+          const status = row.status || "In progress";
+          const isDone = status === "Done";
+          if (isDone || isOrgExecutive) {
+            return null;
+          }
+          return (
+            <Button
+              color="success"
+              size="sm"
+              onClick={() => handleMarkAsDone(row)}
+            >
+              <i className="bx bx-check me-1" />
+              Done
+            </Button>
+          );
+        },
+      },
+      {
         header: "Created By",
         accessorKey: "created_by",
         enableColumnFilter: false,
@@ -278,7 +327,7 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
         cell: (cell) => formatDateValue(cell.getValue()),
       },
     ],
-    [],
+    [isOrgExecutive, handleMarkAsDone],
   );
 
   const handleFieldDraftChange = (key, value) => {
@@ -336,6 +385,25 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
     }
   };
 
+  const filteredTables = useMemo(() => {
+    if (!searchTerm) return tables;
+    const q = searchTerm.toLowerCase();
+    return tables.filter((t) => {
+      const composite = [
+        t.table_name,
+        t.parent_table,
+        t.relationship_type,
+        t.found_at,
+        t.status,
+        t.created_by,
+        t.updated_by,
+      ]
+        .map((x) => String(x || "").toLowerCase())
+        .join(" ");
+      return composite.includes(q);
+    });
+  }, [tables, searchTerm]);
+
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -366,22 +434,7 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
       ) : (
         <TableContainer
           columns={columns}
-          data={tables.filter((t) => {
-            const q = searchTerm.toLowerCase();
-            if (!q) return true;
-            const composite = [
-              t.table_name,
-              t.parent_table,
-              t.relationship_type,
-              t.found_at,
-              t.status,
-              t.created_by,
-              t.updated_by,
-            ]
-              .map((x) => String(x || "").toLowerCase())
-              .join(" ");
-            return composite.includes(q);
-          })}
+          data={filteredTables}
           isGlobalFilter={false}
           isPagination={true}
           isCustomPageSize={true}
@@ -730,6 +783,6 @@ const TablesTab = ({ projectId, tables, onRefresh, showAlert }) => {
   );
 };
 
-export default TablesTab;
+export default React.memo(TablesTab);
 
 

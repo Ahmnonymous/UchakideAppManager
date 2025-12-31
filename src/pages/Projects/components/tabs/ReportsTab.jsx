@@ -182,6 +182,31 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
     }
   };
 
+  const handleMarkAsDone = async (item) => {
+    try {
+      const payload = {
+        project_id: projectId,
+        report_name: item.report_name,
+        description: item.description || null,
+        status: "Done",
+        fields_displayed: item.fields_displayed || [],
+        ...withAudit(true), // Pass truthy to get updated_by/updated_at
+      };
+      await axiosApi.put(
+        `${API_BASE_URL}/appManager/reports/${item.id}`,
+        payload,
+      );
+      showAlert("Report status updated to Done successfully.");
+      onRefresh();
+    } catch (error) {
+      console.error("Error updating report status:", error);
+      showAlert(
+        error?.response?.data?.error || "Unable to update report status",
+        "danger",
+      );
+    }
+  };
+
   const handleDelete = (item) => {
     showDeleteConfirmation(
       {
@@ -254,6 +279,28 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
             <span className={`badge bg-${color}`}>
               {status}
             </span>
+          );
+        },
+      },
+      {
+        header: "Action",
+        enableColumnFilter: false,
+        cell: (cell) => {
+          const row = cell.row.original;
+          const status = row.status || "In progress";
+          const isDone = status === "Done";
+          if (isDone || isOrgExecutive) {
+            return null;
+          }
+          return (
+            <Button
+              color="success"
+              size="sm"
+              onClick={() => handleMarkAsDone(row)}
+            >
+              <i className="bx bx-check me-1" />
+              Done
+            </Button>
           );
         },
       },
@@ -660,6 +707,6 @@ const ReportsTab = ({ projectId, reports, tables = [], onRefresh, showAlert }) =
   );
 };
 
-export default ReportsTab;
+export default React.memo(ReportsTab);
 
 

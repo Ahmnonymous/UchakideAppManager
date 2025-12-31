@@ -171,6 +171,34 @@ const BugsTab = ({ projectId, bugs, menus = [], onRefresh, showAlert }) => {
     }
   };
 
+  const handleMarkAsDone = async (item) => {
+    try {
+      const payload = {
+        project_id: projectId,
+        type: item.type,
+        description: item.description,
+        menu_id: item.menu_id ? Number(item.menu_id) : null,
+        priority: item.priority,
+        status: "Done",
+        source: item.source || "Internal",
+        reported_by: item.reported_by || null,
+        ...enrichAudit(true), // Pass true to get updated_by/updated_at
+      };
+      await axiosApi.put(
+        `${API_BASE_URL}/appManager/bugs/${item.id}`,
+        payload,
+      );
+      showAlert("Bug/Task status updated to Done successfully.");
+      onRefresh();
+    } catch (error) {
+      console.error("Error updating bug status:", error);
+      showAlert(
+        error?.response?.data?.error || "Unable to update bug status",
+        "danger",
+      );
+    }
+  };
+
   const handleDelete = (item, closeModal = false) => {
     showDeleteConfirmation(
       {
@@ -239,6 +267,28 @@ const BugsTab = ({ projectId, bugs, menus = [], onRefresh, showAlert }) => {
             <span className={`badge bg-${color}`}>
               {status}
             </span>
+          );
+        },
+      },
+      {
+        header: "Action",
+        enableColumnFilter: false,
+        cell: (cell) => {
+          const row = cell.row.original;
+          const status = row.status || "Open";
+          const isDone = status === "Done" || status === "Closed";
+          if (isDone || isOrgExecutive) {
+            return null;
+          }
+          return (
+            <Button
+              color="success"
+              size="sm"
+              onClick={() => handleMarkAsDone(row)}
+            >
+              <i className="bx bx-check me-1" />
+              Done
+            </Button>
           );
         },
       },
@@ -612,6 +662,6 @@ const BugsTab = ({ projectId, bugs, menus = [], onRefresh, showAlert }) => {
   );
 };
 
-export default BugsTab;
+export default React.memo(BugsTab);
 
 
