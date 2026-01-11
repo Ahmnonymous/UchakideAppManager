@@ -25,16 +25,24 @@ const DashboardStats = () => {
         const bugsResponse = await axiosApi.get(`${API_BASE_URL}/appManager/bugs`);
         const bugs = bugsResponse.data || [];
         
-        // Count open tasks (type="Task" and status !== "closed")
+        // Count pending tasks (type="Task" and status !== "closed" and status !== "done")
         const openTasks = bugs.filter(
-          (bug) =>
-            (bug.type || "").toLowerCase() === "task" &&
-            (bug.status || "").toLowerCase() !== "closed"
+          (bug) => {
+            const status = (bug.status || "").toLowerCase();
+            return (
+              (bug.type || "").toLowerCase() === "task" &&
+              status !== "closed" &&
+              status !== "done"
+            );
+          }
         ).length;
 
-        // Count open bugs (status !== "closed")
+        // Count pending bugs (status !== "closed" and status !== "done")
         const openBugs = bugs.filter(
-          (bug) => (bug.status || "").toLowerCase() !== "closed"
+          (bug) => {
+            const status = (bug.status || "").toLowerCase();
+            return status !== "closed" && status !== "done";
+          }
         ).length;
 
         setStats({

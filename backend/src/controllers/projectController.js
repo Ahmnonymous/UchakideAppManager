@@ -115,7 +115,10 @@ const projectController = {
         0,
       );
       const openBugs = bugs.filter(
-        (bug) => (bug.status || "").toLowerCase() !== "closed",
+        (bug) => {
+          const status = (bug.status || "").toLowerCase();
+          return status !== "closed" && status !== "done";
+        },
       ).length;
 
       return res.json({
@@ -178,7 +181,10 @@ const projectController = {
         0,
       );
       const openBugs = bugs.filter(
-        (bug) => (bug.status || "").toLowerCase() !== "closed",
+        (bug) => {
+          const status = (bug.status || "").toLowerCase();
+          return status !== "closed" && status !== "done";
+        },
       ).length;
 
       const snapshotData = {
