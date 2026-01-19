@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Container, Row, Col, Alert, Spinner } from "reactstrap";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 import axiosApi from "../../helpers/api_helper";
@@ -21,6 +21,8 @@ const ProjectManagement = () => {
   const [summary, setSummary] = useState(null);
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [projectModalItem, setProjectModalItem] = useState(null);
+  const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 });
+  const searchTimeoutRef = useRef(null);
 
   const getAlertIcon = (color) => {
     switch (color) {
@@ -72,12 +74,33 @@ const ProjectManagement = () => {
     setTimeout(() => setAlert(null), 4000);
   }, []);
 
-  const fetchProjects = useCallback(async () => {
+  const fetchProjects = useCallback(async (search = null, page = 1) => {
     setLoading(true);
     try {
-      const response = await axiosApi.get(`${API_BASE_URL}/appManager/projects`);
-      const data = response.data || [];
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      params.append('page', page.toString());
+      params.append('limit', '50');
+      params.append('sort', 'created_at');
+      params.append('order', 'desc');
+
+      const response = await axiosApi.get(
+        `${API_BASE_URL}/appManager/projects?${params.toString()}`
+      );
+      
+      // Handle both paginated and non-paginated responses (backward compatibility)
+      const responseData = response.data || {};
+      const data = responseData.data || responseData || [];
+      const paginationData = responseData.pagination || {};
+
       setProjects(data);
+      setPagination({
+        page: paginationData.page || page,
+        limit: paginationData.limit || 50,
+        total: paginationData.total || data.length,
+        totalPages: paginationData.totalPages || Math.ceil((paginationData.total || data.length) / (paginationData.limit || 50)),
+      });
+
       setSelectedProject((current) => {
         if (!current && data.length > 0) {
           return data[0];
@@ -136,7 +159,26 @@ const ProjectManagement = () => {
 
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
+
+  // Debounced search effect
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      fetchProjects(searchTerm || null, 1);
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]); // Only depend on searchTerm
 
   useEffect(() => {
     if (selectedProject?.id) {
@@ -146,19 +188,8 @@ const ProjectManagement = () => {
     }
   }, [selectedProject, fetchProjectSummary]);
 
-  const filteredProjects = useMemo(() => {
-    const term = searchTerm.toLowerCase();
-    return projects.filter((project) => {
-      const name = project.project_name || "";
-      const status = project.project_status || "";
-      const developer = project.developer_assigned || "";
-      return (
-        name.toLowerCase().includes(term) ||
-        status.toLowerCase().includes(term) ||
-        developer.toLowerCase().includes(term)
-      );
-    });
-  }, [projects, searchTerm]);
+  // Server-side search is now used, so no client-side filtering needed
+  const filteredProjects = projects;
 
   const handleProjectSave = async (payload, editItem) => {
     try {

@@ -3,6 +3,7 @@ const router = express.Router();
 const projectController = require("../controllers/projectController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const roleMiddleware = require("../middlewares/roleMiddleware");
+const paginationMiddleware = require("../middlewares/pagination");
 const { MODULES } = require("../constants/rbacMatrix");
 
 // Public endpoints (no authentication required)
@@ -14,9 +15,9 @@ router.post("/:id/sync", projectController.sync);
 router.use(authMiddleware);
 router.use(roleMiddleware({ module: MODULES.APPLICANTS }));
 
-router.get("/", projectController.getAll);
+router.get("/", paginationMiddleware, projectController.getAll);
 router.get("/:id", projectController.getById);
-router.get("/:id/summary", projectController.summary);
+router.get("/:id/summary", paginationMiddleware, projectController.summary);
 router.post("/", projectController.create);
 router.put("/:id", projectController.update);
 router.delete("/:id", projectController.delete);

@@ -7,11 +7,67 @@ const {
 const tableName = "Project";
 
 const projectModel = {
-  getAll: async () => {
-    const res = await pool.query(
-      `SELECT * FROM ${tableName} ORDER BY Created_At DESC`,
-    );
-    return res.rows;
+  getAll: async (pagination = {}) => {
+    const { page = 1, limit = 50, offset = 0, sort = 'created_at', order = 'DESC', search = null } = pagination;
+    const maxLimit = Math.min(limit, 200); // Cap at 200 items per page
+
+    let baseQuery = `SELECT * FROM ${tableName}`;
+    const values = [];
+    let paramIndex = 1;
+    const conditions = [];
+
+    // Add search filter if provided
+    if (search) {
+      conditions.push(`(
+        Project_Name ILIKE $${paramIndex} OR 
+        Developer_Assigned ILIKE $${paramIndex} OR
+        Project_Status ILIKE $${paramIndex}
+      )`);
+      values.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (conditions.length > 0) {
+      baseQuery += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    // Get total count for pagination
+    const countQuery = baseQuery.replace(/SELECT[\s\S]*?FROM/i, 'SELECT COUNT(*) as total FROM');
+    const countRes = await pool.query(countQuery, values);
+    const total = parseInt(countRes.rows[0]?.total || 0);
+
+    // Validate sort column to prevent SQL injection
+    const sortColumnMap = {
+      'id': 'ID',
+      'project_name': 'Project_Name',
+      'project_status': 'Project_Status',
+      'start_date': 'Start_Date',
+      'end_date': 'End_Date',
+      'created_at': 'Created_At',
+      'updated_at': 'Updated_At',
+    };
+    const safeSort = sortColumnMap[sort.toLowerCase()] || 'Created_At';
+    const safeOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    // Add pagination and ordering
+    const finalQuery = `
+      ${baseQuery}
+      ORDER BY "${safeSort}" ${safeOrder}
+      LIMIT $${values.length + 1} OFFSET $${values.length + 2}
+    `;
+    const finalValues = [...values, maxLimit, offset];
+
+    const res = await pool.query(finalQuery, finalValues);
+
+    return {
+      data: res.rows,
+      pagination: {
+        page,
+        limit: maxLimit,
+        total,
+        totalPages: Math.ceil(total / maxLimit),
+      },
+    };
   },
 
   getById: async (id) => {

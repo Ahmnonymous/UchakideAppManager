@@ -10,6 +10,14 @@ app.use(cors());
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 
+// Performance optimization middlewares
+const requestTimeout = require("./middlewares/requestTimeout");
+const slowQueryLogger = require("./middlewares/slowQueryLogger");
+
+// Apply timeout and slow query logging (optional, can be enabled)
+// app.use(requestTimeout(30000)); // 30 second timeout
+// app.use(slowQueryLogger(500)); // Log requests > 500ms
+
 // Route imports
 
 const authRoutes = require("./routes/authRoutes");

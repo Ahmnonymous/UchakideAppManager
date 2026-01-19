@@ -14,12 +14,51 @@ const projectMenusModel = {
     return res.rows[0] || null;
   },
 
-  getByProject: async (projectId) => {
-    const res = await pool.query(
-      `SELECT * FROM ${tableName} WHERE project_id = $1 ORDER BY Sort_Order NULLS LAST, Menu_Name ASC`,
-      [projectId],
-    );
-    return res.rows;
+  getByProject: async (projectId, pagination = {}) => {
+    const { page = 1, limit = 50, offset = 0 } = pagination;
+    const maxLimit = Math.min(limit, 200); // Cap at 200 items per page
+
+    // ✅ CRITICAL: Exclude 'Attachment' (BYTEA) column from list queries
+    // Only fetch metadata - attachment fetched separately if needed
+    const baseQuery = `
+      SELECT 
+        ID, Project_ID, Menu_Type, Menu_Name, Menu_Parent, Icon,
+        Description, Sort_Order,
+        Attachment_Filename, Attachment_Mime, Attachment_Size,
+        Created_By, Created_At, Updated_By, Updated_At
+      FROM ${tableName}
+      WHERE Project_ID = $1
+    `;
+
+    // Get total count for pagination
+    const countQuery = `SELECT COUNT(*) as total FROM ${tableName} WHERE Project_ID = $1`;
+    const countRes = await pool.query(countQuery, [projectId]);
+    const total = parseInt(countRes.rows[0]?.total || 0);
+
+    // Add pagination
+    const finalQuery = `
+      ${baseQuery}
+      ORDER BY Sort_Order NULLS LAST, Menu_Name ASC
+      LIMIT $2 OFFSET $3
+    `;
+
+    const res = await pool.query(finalQuery, [projectId, maxLimit, offset]);
+
+    // Return metadata only (no attachment BLOB)
+    const data = res.rows.map((row) => ({
+      ...row,
+      attachment: row.attachment_filename ? "exists" : null, // Indicate attachment exists without loading it
+    }));
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit: maxLimit,
+        total,
+        totalPages: Math.ceil(total / maxLimit),
+      },
+    };
   },
 
   create: async (fields) => {

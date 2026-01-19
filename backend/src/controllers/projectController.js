@@ -7,6 +7,7 @@ const projectTablesModel = require("../models/projectTablesModel");
 const { stripAutoId } = require("../utils/payloadUtils");
 const { analyzeProject, syncProject } = require("../utils/projectSyncUtils");
 const { processProjectSnapshot } = require("../utils/attachmentLinkHelper");
+const cacheService = require("../services/cacheService");
 
 const getAuditName = (req) =>
   (req.user && (req.user.full_name || req.user.name)) ||
@@ -16,8 +17,16 @@ const getAuditName = (req) =>
 const projectController = {
   getAll: async (req, res) => {
     try {
-      const data = await projectModel.getAll();
-      res.json(data);
+      const pagination = req.pagination || {};
+      const result = await projectModel.getAll(pagination);
+      
+      // Return paginated response
+      if (result.pagination) {
+        return res.json(result);
+      }
+      
+      // Backward compatibility: if no pagination in result, return array
+      return res.json(result.data || result);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -45,6 +54,10 @@ const projectController = {
       };
       stripAutoId(payload);
       const created = await projectModel.create(payload);
+      
+      // Invalidate project list cache
+      await cacheService.del('project:*');
+      
       return res.status(201).json(created);
     } catch (error) {
       return res.status(500).json({ error: error.message });
@@ -63,6 +76,10 @@ const projectController = {
       if (!updated) {
         return res.status(404).json({ error: "Project not found" });
       }
+      
+      // Invalidate cache for this project
+      await cacheService.invalidateProject(req.params.id);
+      
       return res.json(updated);
     } catch (error) {
       return res.status(500).json({ error: error.message });
@@ -75,6 +92,11 @@ const projectController = {
       if (!deleted) {
         return res.status(404).json({ error: "Project not found" });
       }
+      
+      // Invalidate cache for this project and list
+      await cacheService.invalidateProject(req.params.id);
+      await cacheService.del('project:*');
+      
       return res.json({ message: "Project deleted" });
     } catch (error) {
       return res.status(500).json({ error: error.message });
@@ -83,31 +105,44 @@ const projectController = {
 
   summary: async (req, res) => {
     try {
-      const project = await projectModel.getById(req.params.id);
+      const projectId = req.params.id;
+      const project = await projectModel.getById(projectId);
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
 
+      // Use cache for summary (5 minute TTL)
+      const cacheKey = `project:${projectId}:summary`;
+      const cached = await cacheService.get(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
+
+      const pagination = req.pagination || {};
       const [
-        payments,
-        bugs,
+        paymentsResult,
+        bugsResult,
         reports,
         tables,
-        menus,
+        menusResult,
         roleMenuAccess,
         roles,
       ] = await Promise.all([
-        projectPaymentsModel.getByProject(req.params.id),
-        projectBugsModel.getByProject(req.params.id),
-        projectReportsModel.getByProject(req.params.id),
-        projectTablesModel.getByProject(req.params.id),
+        projectPaymentsModel.getByProject(projectId, pagination).catch(() => ({ data: [], pagination: {} })),
+        projectBugsModel.getByProject(projectId, pagination).catch(() => ({ data: [], pagination: {} })),
+        projectReportsModel.getByProject(req.params.id).catch(() => []),
+        projectTablesModel.getByProject(req.params.id).catch(() => []),
         // Menus
-        require("../models/projectMenusModel").getByProject(req.params.id).catch(() => []),
+        require("../models/projectMenusModel").getByProject(req.params.id, pagination).catch(() => ({ data: [], pagination: {} })),
         // Role-Menu Access
         require("../models/projectRoleMenuAccessModel").getByProject(req.params.id).catch(() => []),
         // Roles
         projectRolesModel.getByProject(req.params.id).catch(() => []),
       ]);
+
+      const payments = paymentsResult.data || paymentsResult || [];
+      const bugs = bugsResult.data || bugsResult || [];
+      const menus = menusResult.data || menusResult || [];
 
       const totalPayments = payments.reduce(
         (total, payment) =>
@@ -121,7 +156,7 @@ const projectController = {
         },
       ).length;
 
-      return res.json({
+      const responseData = {
         project,
         metrics: {
           payment_count: payments.length,
@@ -141,7 +176,12 @@ const projectController = {
         menus,
         roleMenuAccess,
         roles,
-      });
+      };
+
+      // Cache the response (5 minute TTL)
+      await cacheService.set(cacheKey, responseData, 300);
+
+      return res.json(responseData);
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
