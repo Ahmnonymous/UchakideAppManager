@@ -16,10 +16,12 @@ const DashboardStats = () => {
       try {
         setLoading(true);
         
-        // Fetch all projects
+        // Fetch all projects (handle paginated response)
         const projectsResponse = await axiosApi.get(`${API_BASE_URL}/appManager/projects`);
-        const projects = projectsResponse.data || [];
-        const projectCount = projects.length;
+        const projectsData = projectsResponse.data || {};
+        // Handle both paginated and non-paginated responses
+        const projects = projectsData.data || projectsData || [];
+        const projectCount = projectsData.pagination?.total || projects.length;
 
         // Fetch all bugs
         const bugsResponse = await axiosApi.get(`${API_BASE_URL}/appManager/bugs`);

@@ -36,21 +36,18 @@ const ProfileMenu = (props) => {
   const [pwdSuccess, setPwdSuccess] = useState("");
 
   const fetchEmployeeAvatar = useCallback(async (employeeId) => {
+    // UchakideAppManager doesn't have an employee endpoint
+    // This functionality is disabled - using default avatar/initial
     try {
-      const response = await axiosApi.get(`${API_BASE_URL}/employee/${employeeId}`);
-      const employee = response.data;
-      
-      if (employee?.employee_avatar) {
-        setUserAvatar(employee.employee_avatar);
-      }
-      
-      // Set full name for fallback avatar
-      if (employee?.name && employee?.surname) {
-        setUserFullName(`${employee.name} ${employee.surname}`);
-      }
+      // Optionally, if you want to fetch user data instead:
+      // const response = await axiosApi.get(`${API_BASE_URL}/appManager/users/${employeeId}`);
+      // const user = response.data;
+      // if (user?.name) {
+      //   setUserFullName(user.name);
+      // }
     } catch (error) {
-      console.error("Error fetching employee avatar:", error);
-      // Don't show error to user, just use default avatar
+      // Silently fail - use default avatar
+      console.debug("Employee/user avatar fetch disabled for UchakideAppManager");
     }
   }, []);
 
