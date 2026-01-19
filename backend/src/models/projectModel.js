@@ -37,6 +37,7 @@ const projectModel = {
     const total = parseInt(countRes.rows[0]?.total || 0);
 
     // Validate sort column to prevent SQL injection
+    // Note: Use unquoted identifiers to match PostgreSQL's case-insensitive matching
     const sortColumnMap = {
       'id': 'ID',
       'project_name': 'Project_Name',
@@ -49,10 +50,10 @@ const projectModel = {
     const safeSort = sortColumnMap[sort.toLowerCase()] || 'Created_At';
     const safeOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-    // Add pagination and ordering
+    // Add pagination and ordering (use unquoted identifiers - PostgreSQL matches case-insensitively)
     const finalQuery = `
       ${baseQuery}
-      ORDER BY "${safeSort}" ${safeOrder}
+      ORDER BY ${safeSort} ${safeOrder}
       LIMIT $${values.length + 1} OFFSET $${values.length + 2}
     `;
     const finalValues = [...values, maxLimit, offset];
